@@ -29,4 +29,27 @@ export class AuthService {
       return err;
     }
   }
+
+  async signin(dto: AuthDto) {
+    //find user by unique email
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+    });
+
+    //check if user exists
+    if (!user) {
+      throw new ForbiddenException('Email user does not exists');
+    }
+
+    //compare password
+    const valid = await argon.verify(user.hash, dto.password);
+    if (!valid) {
+      throw new ForbiddenException('Invalid password');
+    }
+
+    delete user.hash;
+    return user;
+  }
 }
